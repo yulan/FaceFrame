@@ -1,0 +1,20 @@
+
+# Xcode
+xcuserdata/
+*.xcuserstate
+DerivedData/
+build/
+*.xcresult
+
+# SwiftPM
+.build/
+.swiftpm/
+Packages/**/.swiftpm/
+Packages/**/Package.resolved
+
+# Clips for the replay mode and the benchmark (videos of a face: never committed)
+Samples/
+
+# macOS
+.DS_Store
+
