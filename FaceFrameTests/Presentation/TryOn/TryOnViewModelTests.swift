@@ -24,13 +24,42 @@ struct TryOnViewModelTests {
     }
 
     @Test func aLostFaceHidesTheGlassesAndTheDots() async {
-        let viewModel = TryOnViewModel(session: FakeTrackingSession(scripted: [.frame(.centered), .frame(nil)]))
+        let viewModel = TryOnViewModel(session: FakeTrackingSession(scripted: [
+            .frame(.centered, contour: Self.contour),
+            .frame(nil),
+        ]))
 
         await viewModel.run()
 
         #expect(viewModel.eyes == nil)
         #expect(viewModel.glassesPlacement(in: Size2D(width: 200, height: 200)) == nil)
         #expect(viewModel.landmarkPoints(in: Size2D(width: 200, height: 200)).isEmpty)
+        #expect(viewModel.contourPoints(in: Size2D(width: 200, height: 200)).isEmpty)
+    }
+
+    // MARK: - Outline of the face
+
+    private static let contour = [Point2D(x: 0.25, y: 0.5), Point2D(x: 0.5, y: 0.75), Point2D(x: 0.75, y: 0.5)]
+
+    @Test func theOutlineOfTheFaceIsMappedOntoTheView() async {
+        let viewModel = TryOnViewModel(session: FakeTrackingSession(scripted: [.frame(.centered, contour: Self.contour)]))
+
+        await viewModel.run()
+
+        // 100 x 100 image in a 200 x 200 view: every coordinate is doubled.
+        #expect(viewModel.contourPoints(in: Size2D(width: 200, height: 200)) == [
+            Point2D(x: 50, y: 100),
+            Point2D(x: 100, y: 150),
+            Point2D(x: 150, y: 100),
+        ])
+    }
+
+    @Test func aFaceWithoutAnOutlineDrawsNoLine() async {
+        let viewModel = TryOnViewModel(session: FakeTrackingSession(scripted: [.frame(.centered)]))
+
+        await viewModel.run()
+
+        #expect(viewModel.contourPoints(in: Size2D(width: 200, height: 200)).isEmpty)
     }
 
     @Test func aNewFaceDoesNotGlideFromTheLostOne() async {
@@ -84,8 +113,7 @@ struct TryOnViewModelTests {
 
     // MARK: - No face
 
-    /// Runs the view model on a session that stays open, and returns what
-    /// `noFaceHint` says once the first result is on screen.
+    /// Returns the hint shown after the first result, on a session that stays open.
     private func hintWhileRunning(first: TrackingResult, mode: TrackingMode = .camera) async -> LocalizedStringResource? {
         let session = OpenTrackingSession(first: first)
         let viewModel = TryOnViewModel(session: session, mode: mode)
@@ -122,12 +150,12 @@ struct TryOnViewModelTests {
         #expect(viewModel.runID == 1)
     }
 
-    /// Goes green once the Domain TODOs (AspectFillMapping, GlassesPlacementCalculator) are done.
+    /// Mapping and placement together.
     @Test func placesTheGlassesBetweenThePupils() async throws {
         let viewModel = TryOnViewModel(session: FakeTrackingSession(scripted: [.frame(.centered)]))
         await viewModel.run()
 
-        // 100×100 image in a 200×200 view: pupils at (80, 100) and (120, 100).
+        // 100 x 100 image in a 200 x 200 view: pupils at (80, 100) and (120, 100).
         let placement = try #require(viewModel.glassesPlacement(in: Size2D(width: 200, height: 200)))
 
         #expect(abs(placement.center.x - 100) < 0.001 && abs(placement.center.y - 100) < 0.001)

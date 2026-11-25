@@ -8,19 +8,34 @@
 import Domain
 import SwiftUI
 
-/// Debug dots on the detected pupils, before smoothing. The quickest way to
-/// see a coordinate-conversion bug: the dots must sit on your pupils.
+/// Debug marks, before smoothing: a dot on each pupil and a line on the jaw.
 struct LandmarksOverlayView: View {
     let points: [Point2D]
+    /// In order. Drawn as an open line.
+    let contour: [Point2D]
     private let diameter = 10.0
+    private let lineWidth = 2.0
 
     var body: some View {
-        ForEach(Array(points.enumerated()), id: \.offset) { _, point in
-            Circle()
-                .fill(Color(.landmarkDot))
-                .frame(width: diameter, height: diameter)
-                .position(x: point.x, y: point.y)
+        Group {
+            outline
+                .stroke(
+                    Color(.landmarkDot),
+                    style: StrokeStyle(lineWidth: lineWidth, lineCap: .round, lineJoin: .round)
+                )
+            ForEach(Array(points.enumerated()), id: \.offset) { _, point in
+                Circle()
+                    .fill(Color(.landmarkDot))
+                    .frame(width: diameter, height: diameter)
+                    .position(x: point.x, y: point.y)
+            }
         }
         .accessibilityHidden(true)
+    }
+
+    private var outline: Path {
+        Path { path in
+            path.addLines(contour.map { CGPoint(x: $0.x, y: $0.y) })
+        }
     }
 }

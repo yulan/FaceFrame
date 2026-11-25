@@ -9,9 +9,7 @@ import DataLayer
 import ImageIO
 import SwiftUI
 
-/// The frames of a replay, drawn the way the camera preview draws its own:
-/// filling the view and cropped around the centre, which is what
-/// `AspectFillMapping` assumes.
+/// The frames of a replay, drawn like the camera preview: aspect fill.
 struct FramePreviewView: View {
     let feed: FramePreviewFeed
     @State private var frame: PreviewFrame?

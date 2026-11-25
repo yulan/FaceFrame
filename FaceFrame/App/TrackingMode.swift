@@ -9,12 +9,10 @@ import Foundation
 
 /// Where the frames come from. Decided once, at launch.
 enum TrackingMode: Equatable {
-    /// The front camera.
     case camera
-    /// Fake pupils and no picture, to check the overlay without a face.
+    /// Fake pupils, no picture.
     case simulated
-    /// A recorded clip played in a loop at its own rhythm, through the same
-    /// pipeline as the camera.
+    /// A recorded clip played in a loop.
     case replay(URL)
 
     /// `-simulatedTracking`: forces the simulation on a device.
@@ -30,8 +28,7 @@ enum TrackingMode: Equatable {
         #endif
     }
 
-    /// A replay wins over everything else. Without one, the simulator
-    /// simulates, because it has no camera.
+    /// A replay wins. Without one, the simulator uses the simulation: it has no camera.
     init(arguments: [String], isSimulator: Bool) {
         if let path = Self.value(after: Self.replayArgument, in: arguments) {
             self = .replay(URL(fileURLWithPath: path))
@@ -47,7 +44,7 @@ enum TrackingMode: Equatable {
             return nil
         }
         let value = arguments[index + 1]
-        // The next argument is another option: the path is missing.
+        // The next argument is another option, so the path is missing.
         return value.hasPrefix("-") ? nil : value
     }
 }

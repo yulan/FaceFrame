@@ -8,7 +8,6 @@
 import Domain
 import SwiftUI
 
-/// Draws the glasses at a placement computed by the ViewModel.
 struct GlassesOverlayView: View {
     let placement: GlassesPlacement
 

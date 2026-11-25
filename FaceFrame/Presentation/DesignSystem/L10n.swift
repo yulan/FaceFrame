@@ -7,7 +7,7 @@
 
 import Foundation
 
-/// Every user-facing string, keyed into `Localizable.xcstrings` (en, fr).
+/// User-facing strings. The keys are in `Localizable.xcstrings` (en, fr).
 enum L10n {
     enum TryOn {
         static func performance(fps: String, milliseconds: String) -> LocalizedStringResource {

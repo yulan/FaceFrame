@@ -12,11 +12,11 @@ import UIKit
 
 /// What is drawn behind the glasses.
 enum TryOnBackdrop {
-    /// The camera's own preview layer.
-    case camera
+    /// The camera preview layer.
+    case camera(any CameraPreviewSource)
     /// The frames of a replay.
     case frames(FramePreviewFeed)
-    /// Nothing: the simulated pupils have no picture.
+    /// Nothing: the simulation has no picture.
     case plain
 }
 
@@ -34,7 +34,10 @@ struct TryOnView: View {
                     GlassesOverlayView(placement: placement)
                 }
                 if viewModel.showsLandmarks {
-                    LandmarksOverlayView(points: viewModel.landmarkPoints(in: viewSize))
+                    LandmarksOverlayView(
+                        points: viewModel.landmarkPoints(in: viewSize),
+                        contour: viewModel.contourPoints(in: viewSize)
+                    )
                 }
             }
         }
@@ -50,8 +53,8 @@ struct TryOnView: View {
     @ViewBuilder
     private var backdropView: some View {
         switch backdrop {
-        case .camera:
-            CameraPreviewView()
+        case .camera(let source):
+            CameraPreviewView(source: source)
         case .frames(let feed):
             FramePreviewView(feed: feed)
         case .plain:
@@ -86,6 +89,8 @@ struct TryOnView: View {
             } label: {
                 Image(systemName: AppSymbol.landmarks.rawValue)
                     .font(.title2)
+                    // Red when on. Without it, "on but no face" looks like "off".
+                    .foregroundStyle(viewModel.showsLandmarks ? Color(.landmarkDot) : Color.primary)
                     .padding(12)
                     .background(.regularMaterial, in: Circle())
             }
@@ -120,7 +125,7 @@ struct TryOnView: View {
     }
 }
 
-/// Wording and symbol for each failure, out of the view body.
+/// Text and symbol for each failure.
 private struct FailureContent {
     let title: LocalizedStringResource
     let message: LocalizedStringResource

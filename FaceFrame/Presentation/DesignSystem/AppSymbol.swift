@@ -5,7 +5,7 @@
 //  Created by Lan YU on 21/11/2026.
 //
 
-/// Every SF Symbol used by the UI, in one place.
+/// SF Symbols used by the UI.
 enum AppSymbol: String {
     case glasses = "eyeglasses"
     case landmarks = "dot.viewfinder"

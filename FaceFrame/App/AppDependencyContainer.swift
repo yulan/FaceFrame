@@ -25,15 +25,16 @@ struct AppDependencyContainer {
         self.mode = mode
         switch mode {
         case .camera:
-            session = TrackingPipeline(source: CameraFrameSource(), tracker: VisionFaceTracker())
-            backdrop = .camera
+            // The preview uses the same session as the frames.
+            let camera = CameraFrameSource()
+            session = TrackingPipeline(source: camera, tracker: VisionFaceTracker())
+            backdrop = .camera(camera.previewSource)
         case .simulated:
             session = SimulatedTrackingSession()
             backdrop = .plain
         case .replay(let url):
-            // Same pipeline and same tracker as the camera; only the source
-            // changes. A file has no preview layer, so its frames are also
-            // published for the screen. Mirrored, like the front camera preview.
+            // Same pipeline and tracker as the camera. A file has no preview layer,
+            // so its frames are also sent to the screen, mirrored like the front camera.
             let feed = FramePreviewFeed()
             let clip = VideoFileFrameSource(
                 url: url,

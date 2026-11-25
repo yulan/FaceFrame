@@ -20,14 +20,15 @@ final class TryOnViewModel {
     }
 
     private(set) var state: State = .starting
-    /// Smoothed pupils: what the glasses follow.
+    /// Smoothed pupils, for the glasses.
     private(set) var eyes: EyePositions?
-    /// Pupils as detected, for the landmark dots. Comparing the two on screen
-    /// shows what the smoothing does.
+    /// Pupils as detected, for the dots.
     private(set) var rawEyes: EyePositions?
+    /// Jaw line as detected.
+    private(set) var rawContour: [Point2D] = []
     private(set) var imageSize: Size2D?
     private(set) var performance: PerformanceMeter.Snapshot?
-    /// Changes on retry; the view restarts its `.task(id:)` when it does.
+    /// Changes on retry. The view then restarts its `.task(id:)`.
     private(set) var runID = 0
     var showsLandmarks = false
     let mode: TrackingMode
@@ -72,7 +73,7 @@ final class TryOnViewModel {
         runID += 1
     }
 
-    /// Says where the frames come from when it isn't the camera.
+    /// `nil` for the camera.
     var sourceLabel: LocalizedStringResource? {
         switch mode {
         case .camera: nil
@@ -81,8 +82,7 @@ final class TryOnViewModel {
         }
     }
 
-    /// What to tell the user while no face is found. Asking a recorded clip
-    /// to look at the camera would make no sense.
+    /// Shown while no face is found. A replay can't "look at the camera".
     var noFaceHint: LocalizedStringResource? {
         guard state == .running, rawEyes == nil else { return nil }
         return mode == .camera ? L10n.TryOn.lookAtCamera : L10n.TryOn.noFace
@@ -106,6 +106,11 @@ final class TryOnViewModel {
         return [mapping.viewPoint(for: rawEyes.left), mapping.viewPoint(for: rawEyes.right)]
     }
 
+    func contourPoints(in viewSize: Size2D) -> [Point2D] {
+        guard let mapping = mapping(for: viewSize) else { return [] }
+        return rawContour.map(mapping.viewPoint(for:))
+    }
+
     private func mapping(for viewSize: Size2D) -> AspectFillMapping? {
         imageSize.map { AspectFillMapping(imageSize: $0, viewSize: viewSize) }
     }
@@ -115,11 +120,10 @@ final class TryOnViewModel {
         performance = meter.snapshot
         imageSize = result.imageSize
         rawEyes = result.eyes
+        rawContour = result.face?.contour ?? []
         if let detected = result.eyes {
             eyes = smoother.smooth(detected)
         } else {
-            // Face lost: hide the glasses, and don't let the next face glide in
-            // from where this one was.
             eyes = nil
             smoother.reset()
         }
@@ -128,6 +132,7 @@ final class TryOnViewModel {
     private func clearTracking() {
         eyes = nil
         rawEyes = nil
+        rawContour = []
         imageSize = nil
         performance = nil
         smoother.reset()

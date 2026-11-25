@@ -7,10 +7,10 @@
 
 import OSLog
 
-/// Same subsystem as the DataLayer, so one Console filter shows the whole session.
+/// Same subsystem as DataLayer: one Console filter shows everything.
 enum Log {
     private static let subsystem = "YULan.FaceFrame"
 
-    /// Errors actually shown to the user.
+    /// Errors shown to the user.
     static let ui = Logger(subsystem: subsystem, category: "ui")
 }

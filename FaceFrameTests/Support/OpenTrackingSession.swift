@@ -8,8 +8,7 @@
 import Domain
 import Synchronization
 
-/// Emits one result and then stays open, like a camera that keeps running.
-/// For what the view model shows *while* tracking.
+/// Sends one result and stays open, like a camera.
 final class OpenTrackingSession: FaceTrackingSession {
     private let first: TrackingResult
     private let (applied, appliedContinuation) = AsyncStream.makeStream(of: Void.self)
@@ -26,9 +25,9 @@ final class OpenTrackingSession: FaceTrackingSession {
                 return count
             }
             if pull == 1 { return first }
-            // The consumer asks for a second result: it has finished with the first.
+            // A second result is asked: the first one has been applied.
             appliedContinuation.yield()
-            // Nothing more comes; this returns when the consumer is cancelled.
+            // Nothing more. Returns when the consumer is cancelled.
             for await _ in AsyncStream<Never>(Never.self, { _ in }) {}
             return nil
         }
