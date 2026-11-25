@@ -7,16 +7,12 @@
 
 import Foundation
 
-/// Something that produces video frames: the camera, or a video file.
+/// Gives video frames: the camera or a video file.
 public protocol FrameSource: Sendable {
-    /// Delivers frames one at a time, on a serial queue owned by the source,
-    /// until the source runs out of frames or `stop()` is called. Returns once
-    /// delivery has ended.
-    ///
-    /// `onFrame` is never called concurrently with itself, so it can do
-    /// synchronous work on the frame. Throws a `TrackingError`.
+    /// Calls `onFrame` for each frame, one at a time, on the source's own queue.
+    /// Returns when there are no more frames, or after `stop()`.
     func run(onFrame: @escaping @Sendable (VideoFrame) -> Void) async throws
 
-    /// Ends delivery. Safe to call from any thread, and more than once.
+    /// Can be called from any thread.
     func stop()
 }

@@ -8,7 +8,6 @@
 import Domain
 import Testing
 
-/// Written before the implementation: some tests are red until the TODO in ExponentialSmoother is done.
 struct ExponentialSmootherTests {
     private func eyes(leftX: Double, rightX: Double, y: Double) -> EyePositions {
         EyePositions(left: Point2D(x: leftX, y: y), right: Point2D(x: rightX, y: y))

@@ -10,33 +10,23 @@ import Domain
 import Synchronization
 
 /// Plays a video file through the same pipeline as the camera.
-///
-/// Two uses, with two pacings:
-/// - **benchmark** (`.asFastAsPossible`): the same recorded clip gives
-///   comparable numbers before and after an optimization, which a live camera
-///   never does;
-/// - **replay** (`.realTime`): the clip is delivered at its own rhythm, so the
-///   app behaves on screen as it would in front of the camera, in the
-///   simulator too.
+/// Used by the benchmark (as fast as possible) and by the replay (real time).
 public final class VideoFileFrameSource: FrameSource {
     public enum Orientation: Sendable {
         /// The same orientation for every frame.
         case fixed(CGImagePropertyOrientation)
-        /// The rotation stored in the file. `mirrored` also flips the picture
-        /// left to right, the way the front camera preview shows it.
+        /// The rotation stored in the file. `mirrored` also flips left and right.
         case recorded(mirrored: Bool)
     }
 
     public enum Pacing: Sendable {
         /// As fast as the frames can be decoded.
         case asFastAsPossible
-        /// Each frame at its own time. A frame that is already one frame late
-        /// is dropped, like a camera with `alwaysDiscardsLateVideoFrames`: the
-        /// frame rate measured during a replay is then the one a camera would give.
+        /// Each frame at its own time. A late frame is dropped, like the camera does.
         case realTime
     }
 
-    /// `stop()` ends the runs started so far; a later `run` starts again.
+    /// `stop()` ends the runs started so far. A later `run` can start again.
     private struct Runs {
         var started = 0
         var stopped = 0
@@ -44,7 +34,7 @@ public final class VideoFileFrameSource: FrameSource {
 
     private struct Clip {
         let orientation: CGImagePropertyOrientation
-        /// Time between two frames, `nil` when the file doesn't tell.
+        /// `nil` when the file doesn't give it.
         let frameInterval: Duration?
         let duration: Duration
     }
@@ -57,10 +47,8 @@ public final class VideoFileFrameSource: FrameSource {
     private let queue = DispatchQueue(label: "YULan.FaceFrame.VideoFileFrameSource")
     private let runs = Mutex(Runs())
 
-    /// - Parameters:
-    ///   - loops: starts again at the end of the file, with timestamps that
-    ///     keep increasing, until `stop()`.
-    ///   - clock: paces `.realTime`. Tests inject a fake one.
+    /// `loops`: plays again at the end of the file, until `stop()`.
+    /// `clock`: for `.realTime`. Tests use a fake one.
     public init(
         url: URL,
         orientation: Orientation = .recorded(mirrored: false),
@@ -80,8 +68,7 @@ public final class VideoFileFrameSource: FrameSource {
             runs.started += 1
             return runs.started
         }
-        // The run is registered before the handler is installed: a task that is
-        // already cancelled stops this run too.
+        // Register the run first, so a task that is already cancelled stops it too.
         try await withTaskCancellationHandler {
             try await play(run: run, onFrame: onFrame)
         } onCancel: {
@@ -116,12 +103,11 @@ public final class VideoFileFrameSource: FrameSource {
             Log.frames.error("Cannot load the video: \(error.localizedDescription, privacy: .public)")
             throw TrackingError.sourceFailed
         }
-        // AVAssetTrack isn't marked Sendable, but it is immutable once its
-        // properties are loaded, and from here on only `queue` touches it.
+        // AVAssetTrack isn't Sendable. Safe here: it doesn't change once loaded,
+        // and only `queue` uses it after this line.
         nonisolated(unsafe) let track = loadedTrack
 
-        // Decoding (and the waits of a real-time replay) is blocking work: do
-        // it on our own queue, not on the cooperative thread pool.
+        // Decoding and sleeping block the thread, so this runs on our own queue.
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, any Error>) in
             queue.async { [self] in
                 do {
@@ -153,21 +139,20 @@ public final class VideoFileFrameSource: FrameSource {
         var schedule = Schedule(pacing: pacing, frameInterval: clip.frameInterval, clock: clock)
         var pass = 0
         repeat {
-            // On each pass the timestamps move on by one clip, so they never go back.
+            // Each pass adds one clip duration, so the timestamps keep increasing.
             let offset = clip.duration * pass
             let frameCount = try readOnce(asset: asset, track: track, run: run) { pixelBuffer, time in
                 let timestamp = time + offset
                 guard schedule.waitForTurn(of: timestamp) else { return }
                 onFrame(VideoFrame(pixelBuffer: pixelBuffer, timestamp: timestamp, orientation: clip.orientation))
             }
-            // A file without a single frame would loop forever.
+            // A file without frames would loop forever.
             guard frameCount > 0 else { return }
             pass += 1
         } while loops && !isStopped(run)
     }
 
-    /// Reads the file once, from the first frame to the last.
-    /// - Returns: the number of frames read.
+    /// Reads the file once. Returns the number of frames.
     private func readOnce(
         asset: AVAsset,
         track: AVAssetTrack,
@@ -213,8 +198,7 @@ private struct Schedule {
     let pacing: VideoFileFrameSource.Pacing
     let frameInterval: Duration?
     let clock: PlaybackClock
-    /// Clock time and timestamp of the first frame: every other frame is
-    /// placed relative to them, so small errors don't add up.
+    /// Clock time and timestamp of the first frame. The other frames are placed from them.
     private var origin: (clock: Duration, timestamp: Duration)?
 
     init(pacing: VideoFileFrameSource.Pacing, frameInterval: Duration?, clock: PlaybackClock) {
@@ -223,8 +207,7 @@ private struct Schedule {
         self.clock = clock
     }
 
-    /// Waits until the frame is due.
-    /// - Returns: `false` when the frame is too late and must be dropped.
+    /// Waits until the frame is due. Returns `false` when the frame is late.
     mutating func waitForTurn(of timestamp: Duration) -> Bool {
         guard case .realTime = pacing else { return true }
         guard let origin else {

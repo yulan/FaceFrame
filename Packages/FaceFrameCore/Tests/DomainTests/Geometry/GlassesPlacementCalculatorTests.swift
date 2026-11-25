@@ -9,7 +9,7 @@ import Domain
 import Foundation
 import Testing
 
-/// Written before the implementation: red until the TODO in GlassesPlacementCalculator is done.
+/// Screen coordinates: y goes down.
 struct GlassesPlacementCalculatorTests {
     private let calculator = GlassesPlacementCalculator(widthToPupilDistanceRatio: 2.1)
 
@@ -45,8 +45,7 @@ struct GlassesPlacementCalculatorTests {
     }
 
     @Test func swappedPointsAreNotDrawnUpsideDown() {
-        // A mirroring mistake upstream can hand over the pupils swapped. The
-        // glasses should still be level, not rotated by 180°.
+        // Swapped pupils must still give level glasses, not turned upside down.
         let placement = calculator.placement(left: Point2D(x: 200, y: 200), right: Point2D(x: 100, y: 200))
 
         expectClose(placement.center, Point2D(x: 150, y: 200))

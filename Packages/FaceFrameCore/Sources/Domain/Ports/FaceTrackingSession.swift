@@ -7,11 +7,9 @@
 
 import Foundation
 
-/// What the Presentation layer depends on: a stream of tracking results.
-///
-/// Iterating `results()` starts the source (camera, video file, simulation).
-/// Ending the iteration, or cancelling the task that iterates, stops it.
-/// The stream fails with a `TrackingError`.
+/// A stream of tracking results, for the Presentation layer.
+/// Iterating starts the source. Ending the loop or cancelling the task stops it.
+/// Fails with a `TrackingError`.
 public protocol FaceTrackingSession: Sendable {
     func results() -> AsyncThrowingStream<TrackingResult, any Error>
 }

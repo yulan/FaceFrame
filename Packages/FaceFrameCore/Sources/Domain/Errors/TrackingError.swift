@@ -7,13 +7,12 @@
 
 import Foundation
 
-/// The only errors the Presentation layer ever sees. DataLayer maps
-/// AVFoundation and Vision errors to one of these.
+/// The only errors the UI sees. DataLayer maps AVFoundation and Vision errors to these.
 public enum TrackingError: Error, Equatable, Sendable {
-    /// The user refused camera access (or it is restricted).
+    /// Refused or restricted.
     case cameraAccessDenied
-    /// No usable camera: simulator, or the capture session couldn't start.
+    /// No camera, or the session didn't start.
     case cameraUnavailable
-    /// The frame source failed while running (unreadable file, session error).
+    /// The source failed while running.
     case sourceFailed
 }

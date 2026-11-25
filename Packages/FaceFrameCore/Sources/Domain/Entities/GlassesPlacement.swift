@@ -9,12 +9,11 @@ import Foundation
 
 /// Where to draw the glasses, in view points.
 public struct GlassesPlacement: Equatable, Sendable {
-    /// Midpoint between the pupils: the bridge of the glasses.
+    /// Midpoint between the pupils.
     public var center: Point2D
-    /// Width of the frame, in points.
+    /// In points.
     public var width: Double
-    /// Rotation in radians. y grows downwards, so a positive angle turns the
-    /// glasses clockwise on screen (right eye lower than the left one).
+    /// In radians. Positive is clockwise on screen, because y goes down.
     public var angle: Double
 
     public init(center: Point2D, width: Double, angle: Double) {

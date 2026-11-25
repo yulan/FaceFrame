@@ -8,7 +8,7 @@
 import Domain
 import Testing
 
-/// Written before the implementation: red until the TODO in AspectFillMapping is done.
+/// Same aspect ratio, taller view, wider view.
 struct AspectFillMappingTests {
     @Test func sameAspectRatioIsAPlainScale() {
         let mapping = AspectFillMapping(
@@ -21,8 +21,7 @@ struct AspectFillMappingTests {
     }
 
     @Test func tallerViewCropsTheSides() {
-        // A 720×1280 image fills a 390×844 view: scale = 844 / 1280, the scaled
-        // image is 474.75 pt wide, so 42.375 pt are cropped on each side.
+        // 720 x 1280 in 390 x 844: scale 844 / 1280, 474.75 pt wide, 42.375 pt cropped on each side.
         let mapping = AspectFillMapping(
             imageSize: Size2D(width: 720, height: 1280),
             viewSize: Size2D(width: 390, height: 844)
@@ -34,8 +33,7 @@ struct AspectFillMappingTests {
     }
 
     @Test func widerViewCropsTopAndBottom() {
-        // A 720×1280 image fills an 800×800 view: scale = 800 / 720, the scaled
-        // image is 1422.2 pt high, so 311.1 pt are cropped at the top and bottom.
+        // 720 x 1280 in 800 x 800: scale 800 / 720, 1422.2 pt high, 311.1 pt cropped at the top and bottom.
         let mapping = AspectFillMapping(
             imageSize: Size2D(width: 720, height: 1280),
             viewSize: Size2D(width: 800, height: 800)

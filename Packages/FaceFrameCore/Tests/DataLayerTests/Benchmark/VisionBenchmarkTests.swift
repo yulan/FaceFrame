@@ -10,12 +10,9 @@ import Domain
 import Foundation
 import Testing
 
-/// Phase 2 tool, off by default. Runs the real `VisionFaceTracker` over a
-/// recorded clip and prints the numbers that go in the README:
-///
+/// Off by default. Runs `VisionFaceTracker` on a recorded clip and prints
+/// the numbers for the README:
 ///     FACEFRAME_BENCHMARK_VIDEO=/path/to/clip.mov swift test --filter VisionBenchmark
-///
-/// Run it before and after each optimization, on the same clip.
 @Suite(.enabled(if: ProcessInfo.processInfo.environment["FACEFRAME_BENCHMARK_VIDEO"] != nil))
 struct VisionBenchmarkTests {
     @Test func processingTimePerFrame() async throws {

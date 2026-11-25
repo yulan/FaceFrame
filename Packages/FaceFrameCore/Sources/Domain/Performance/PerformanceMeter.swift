@@ -7,10 +7,8 @@
 
 import Foundation
 
-/// Rolling frame rate and processing time over the last `windowSize` frames.
-///
-/// Works only on the timestamps it is given (frame presentation times), never
-/// on the wall clock, so it is deterministic in tests.
+/// Frame rate and processing time over the last `windowSize` frames.
+/// Uses the frame timestamps, not the wall clock.
 public struct PerformanceMeter: Sendable {
     public struct Snapshot: Equatable, Sendable {
         public var framesPerSecond: Double

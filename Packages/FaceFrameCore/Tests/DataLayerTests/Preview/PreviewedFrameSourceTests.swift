@@ -16,7 +16,7 @@ import Testing
 
 @Suite(.timeLimit(.minutes(1)))
 struct PreviewedFrameSourceTests {
-    /// Delivers one BGRA frame per given width, each filled with one colour.
+    /// One BGRA frame per width, each filled with one colour.
     private struct ColouredFrameSource: FrameSource {
         var widths: [Int]
         var orientation: CGImagePropertyOrientation = .up
@@ -73,7 +73,7 @@ struct PreviewedFrameSourceTests {
         #expect(Array(pixels.prefix(3)) == [10, 20, 30])
     }
 
-    /// A slow screen must show the latest picture, not a queue of old ones.
+    /// A slow screen must show the newest picture.
     @Test func keepsOnlyTheNewestFrame() async throws {
         let feed = FramePreviewFeed()
         let frames = feed.frames()
@@ -93,9 +93,8 @@ struct PreviewedFrameSourceTests {
         let source = PreviewedFrameSource(ColouredFrameSource(widths: [1]), feed: feed)
 
         try await source.run { _ in
-            // Subscribing again while the frame is being processed ends the
-            // first stream. A frame published before this point would already
-            // be waiting in it.
+            // Subscribing again here ends the first stream. A frame published too
+            // early would already be in it.
             subscribedDuring.withLock { $0 = feed.frames() }
         }
 

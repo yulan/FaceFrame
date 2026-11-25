@@ -8,13 +8,8 @@
 import Domain
 import Foundation
 
-/// Connects a `FrameSource` to a `FaceTracker` and publishes one
-/// `TrackingResult` per frame.
-///
-///     source queue: frame ─▶ tracker.eyes(in:) ─▶ TrackingResult ─▶ stream ─▶ MainActor
-///
-/// The detection runs synchronously on the source's queue, so the pixel buffer
-/// never crosses an isolation boundary; only the `Sendable` result does.
+/// Runs the tracker on each frame of a source and publishes one result per frame.
+/// The detection runs on the source's queue. Only the `Sendable` result leaves it.
 public final class TrackingPipeline: FaceTrackingSession {
     public typealias BufferingPolicy = AsyncThrowingStream<TrackingResult, any Error>.Continuation.BufferingPolicy
 
@@ -23,12 +18,9 @@ public final class TrackingPipeline: FaceTrackingSession {
     private let now: @Sendable () -> Duration
     private let bufferingPolicy: BufferingPolicy
 
-    /// - Parameters:
-    ///   - now: a monotonic time used to measure the detection. Tests inject a
-    ///     scripted one.
-    ///   - bufferingPolicy: the default keeps only the newest result: if the
-    ///     UI falls behind, showing an old position late is worse than
-    ///     skipping it. A benchmark that must see every frame uses `.unbounded`.
+    /// `now`: the time used to measure the detection. Tests pass a scripted one.
+    /// `bufferingPolicy`: by default only the newest result is kept, so a slow UI
+    /// skips frames. The benchmark uses `.unbounded`.
     public init(
         source: any FrameSource,
         tracker: any FaceTracker,
@@ -74,26 +66,26 @@ public final class TrackingPipeline: FaceTrackingSession {
     ) -> TrackingResult {
         let signpostState = Log.signposter.beginInterval("detect")
         let start = now()
-        let eyes: EyePositions?
+        let face: FaceLandmarks?
         do {
-            eyes = try tracker.eyes(in: frame)
+            face = try tracker.face(in: frame)
         } catch {
-            // One bad frame shouldn't end the session: treat it as "no face".
+            // A failed frame counts as "no face". The session goes on.
             Log.tracking.error("Detection failed: \(error.localizedDescription, privacy: .public)")
-            eyes = nil
+            face = nil
         }
         let processingTime = now() - start
         Log.signposter.endInterval("detect", signpostState)
 
         return TrackingResult(
-            eyes: eyes,
+            face: face,
             imageSize: frame.displaySize,
             timestamp: frame.timestamp,
             processingTime: processingTime
         )
     }
 
-    /// Time elapsed since the call, from the monotonic `ContinuousClock`.
+    /// Time since this call.
     public static func monotonicNow() -> @Sendable () -> Duration {
         let origin = ContinuousClock.now
         return { ContinuousClock.now - origin }

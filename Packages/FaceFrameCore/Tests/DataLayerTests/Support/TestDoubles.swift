@@ -15,7 +15,7 @@ enum TestError: Error {
     case detection
 }
 
-/// A small blank pixel buffer: the fakes never look at the pixels.
+/// A small blank pixel buffer. The fakes don't read the pixels.
 func makePixelBuffer(width: Int = 4, height: Int = 3) -> CVPixelBuffer {
     var buffer: CVPixelBuffer?
     let status = CVPixelBufferCreate(kCFAllocatorDefault, width, height, kCVPixelFormatType_32BGRA, nil, &buffer)
@@ -23,8 +23,7 @@ func makePixelBuffer(width: Int = 4, height: Int = 3) -> CVPixelBuffer {
     return buffer!
 }
 
-/// Delivers `frameCount` blank frames, then either returns or, with
-/// `waitsForStop`, keeps "running" until `stop()` like a camera would.
+/// Delivers `frameCount` blank frames. With `waitsForStop`, keeps running until `stop()`.
 final class FakeFrameSource: FrameSource {
     private struct State {
         var stopCount = 0
@@ -98,28 +97,29 @@ final class FakeFrameSource: FrameSource {
     }
 }
 
-/// Returns the scripted answer for each call in order; `nil` answers mean
-/// "no face", a `.failure` throws.
+/// Returns the scripted answers in order. `nil` means no face, `.failure` throws.
+/// Every face has the given contour.
 final class StubFaceTracker: FaceTracker {
     private let answers: [Result<EyePositions?, TestError>]
+    private let contour: [Point2D]
     private let callCount = Mutex(0)
 
-    init(answers: [Result<EyePositions?, TestError>]) {
+    init(answers: [Result<EyePositions?, TestError>], contour: [Point2D] = []) {
         self.answers = answers
+        self.contour = contour
     }
 
-    func eyes(in frame: VideoFrame) throws -> EyePositions? {
+    func face(in frame: VideoFrame) throws -> FaceLandmarks? {
         let index = callCount.withLock { count in
             defer { count += 1 }
             return count
         }
         guard index < answers.count else { return nil }
-        return try answers[index].get()
+        return try answers[index].get().map { FaceLandmarks(eyes: $0, contour: contour) }
     }
 }
 
-/// A clock for replays that never waits: `sleep` only moves its time forward
-/// and records what was asked.
+/// A clock that never waits. `sleep` moves its time forward and records the call.
 final class FakePlaybackClock: Sendable {
     private struct State {
         var time = Duration.zero
@@ -148,8 +148,7 @@ final class FakePlaybackClock: Sendable {
     }
 }
 
-/// A clock that returns the given instants in order, so measured durations
-/// are exact.
+/// Returns the given instants in order, so the measured durations are exact.
 func scriptedNow(_ instants: [Duration]) -> @Sendable () -> Duration {
     let index = Mutex(0)
     return {

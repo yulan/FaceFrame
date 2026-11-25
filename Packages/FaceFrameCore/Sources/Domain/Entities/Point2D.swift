@@ -7,8 +7,7 @@
 
 import Foundation
 
-/// A point in whatever space the caller documents (normalized image space or
-/// view points). Domain doesn't import CoreGraphics, so it has its own types.
+/// Domain doesn't import CoreGraphics, so it has its own point and size.
 public struct Point2D: Equatable, Sendable {
     public var x: Double
     public var y: Double

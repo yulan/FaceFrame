@@ -8,8 +8,7 @@
 import Domain
 import Testing
 
-/// Geometry produces doubles: compare with a tolerance, and print both points
-/// when it fails.
+/// Compares with a tolerance and prints both values on failure.
 func expectClose(
     _ actual: Point2D,
     _ expected: Point2D,

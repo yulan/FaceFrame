@@ -7,7 +7,7 @@
 
 import Domain
 
-/// Emits the given results, then finishes (or fails).
+/// Sends the given results, then finishes or fails.
 struct FakeTrackingSession: FaceTrackingSession {
     var scripted: [TrackingResult]
     var failure: TrackingError?
@@ -25,11 +25,17 @@ struct FakeTrackingSession: FaceTrackingSession {
 extension TrackingResult {
     static func frame(
         _ eyes: EyePositions?,
+        contour: [Point2D] = [],
         at timestamp: Duration = .zero,
         processing: Duration = .milliseconds(4),
         imageSize: Size2D = Size2D(width: 100, height: 100)
     ) -> TrackingResult {
-        TrackingResult(eyes: eyes, imageSize: imageSize, timestamp: timestamp, processingTime: processing)
+        TrackingResult(
+            face: eyes.map { FaceLandmarks(eyes: $0, contour: contour) },
+            imageSize: imageSize,
+            timestamp: timestamp,
+            processingTime: processing
+        )
     }
 }
 

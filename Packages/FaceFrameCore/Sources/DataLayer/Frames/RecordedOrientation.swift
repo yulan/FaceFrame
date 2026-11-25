@@ -9,20 +9,11 @@ import CoreGraphics
 import ImageIO
 
 extension CGImagePropertyOrientation {
-    /// The orientation that shows the frames of a recorded video upright.
-    ///
-    /// A video file stores its frames as the sensor saw them, plus a transform
-    /// to apply at playback. A phone held in portrait records landscape frames
-    /// and a quarter-turn clockwise.
-    ///
-    /// - Parameters:
-    ///   - preferredTransform: the track's transform. Only quarter turns are
-    ///     recognised; anything else is treated as "no rotation".
-    ///   - mirrored: also flips the picture left to right, the way the front
-    ///     camera preview shows it.
+    /// Orientation that shows a recorded video upright.
+    /// Only quarter turns are handled. Other transforms count as no rotation.
+    /// `mirrored` also flips left and right, like the front camera preview.
     init(preferredTransform transform: CGAffineTransform, mirrored: Bool) {
-        // In the video's coordinates (y down), a quarter-turn clockwise sends
-        // (1, 0) to (0, 1), so `a` and `b` are enough to tell the turns apart.
+        // y goes down in a video. A quarter turn clockwise sends (1, 0) to (0, 1).
         let turns = (transform.a.rounded(), transform.b.rounded())
         switch turns {
         case (0, 1):

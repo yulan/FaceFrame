@@ -12,7 +12,7 @@ import Testing
 
 struct RecordedOrientationTests {
     private static let identity = CGAffineTransform.identity
-    /// What a phone held in portrait stores: a quarter turn clockwise.
+    /// A phone in portrait stores a quarter turn clockwise.
     private static let quarterTurn = CGAffineTransform(a: 0, b: 1, c: -1, d: 0, tx: 1080, ty: 0)
     private static let halfTurn = CGAffineTransform(a: -1, b: 0, c: 0, d: -1, tx: 1920, ty: 1080)
     private static let threeQuarterTurn = CGAffineTransform(a: 0, b: -1, c: 1, d: 0, tx: 0, ty: 1920)
@@ -27,9 +27,7 @@ struct RecordedOrientationTests {
         #expect(CGImagePropertyOrientation(preferredTransform: transform, mirrored: false) == expected)
     }
 
-    /// Mirrored is the same picture flipped left to right, as the front
-    /// camera preview shows it: portrait gives the `.leftMirrored` that Vision
-    /// expects for the front camera.
+    /// Mirrored: flipped left to right. Portrait gives `.leftMirrored`, as for the front camera.
     @Test(arguments: [
         (identity, CGImagePropertyOrientation.upMirrored),
         (quarterTurn, .leftMirrored),

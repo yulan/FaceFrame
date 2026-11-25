@@ -7,9 +7,8 @@
 
 import Domain
 
-/// Finds the pupils in one frame.
+/// Finds the face in one frame.
 public protocol FaceTracker: Sendable {
-    /// Called on the frame source's queue, one frame at a time.
-    /// - Returns: `nil` when there is no face in the frame.
-    func eyes(in frame: VideoFrame) throws -> EyePositions?
+    /// Called on the frame source's queue. `nil` when there is no face.
+    func face(in frame: VideoFrame) throws -> FaceLandmarks?
 }

@@ -7,12 +7,9 @@
 
 import Foundation
 
-/// Pupil positions in the image **as it is displayed**.
-///
-/// Coordinate space: normalized to the whole image (0...1), origin at the
-/// top-left, x to the right, y down. "As displayed" means the front-camera
-/// mirroring is already applied, so `left` is the pupil that appears on the
-/// left of the screen (the user's right eye).
+/// Pupils in the image as displayed, mirroring already applied.
+/// Normalized 0...1, origin top-left, y down.
+/// `left` is the pupil on the left of the screen.
 public struct EyePositions: Equatable, Sendable {
     public var left: Point2D
     public var right: Point2D

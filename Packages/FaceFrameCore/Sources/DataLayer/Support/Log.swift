@@ -13,7 +13,6 @@ enum Log {
     static let tracking = Logger(subsystem: subsystem, category: "tracking")
     static let frames = Logger(subsystem: subsystem, category: "frames")
 
-    /// Shows up under "Points of Interest" in Instruments: one interval per
-    /// processed frame. Phase 2 starts by reading these.
+    /// One interval per frame, under "Points of Interest" in Instruments.
     static let signposter = OSSignposter(subsystem: subsystem, category: .pointsOfInterest)
 }

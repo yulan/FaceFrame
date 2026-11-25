@@ -31,8 +31,21 @@ struct TrackingPipelineTests {
         #expect(results.map(\.timestamp) == [.zero, .milliseconds(100), .milliseconds(200)])
     }
 
+    @Test func theOutlineOfTheFaceReachesTheResult() async throws {
+        let contour = [Point2D(x: 0.3, y: 0.5), Point2D(x: 0.5, y: 0.7), Point2D(x: 0.7, y: 0.5)]
+        let pipeline = TrackingPipeline(
+            source: FakeFrameSource(frameCount: 2),
+            tracker: StubFaceTracker(answers: [.success(.sample), .success(nil)], contour: contour),
+            bufferingPolicy: .unbounded
+        )
+
+        let results = try await collect(pipeline)
+
+        #expect(results.map(\.face) == [FaceLandmarks(eyes: .sample, contour: contour), nil])
+    }
+
     @Test func reportsTheDisplayedImageSize() async throws {
-        // A 4×3 buffer shown with .leftMirrored (front camera, portrait) is 3×4 on screen.
+        // A 4 x 3 buffer with .leftMirrored is 3 x 4 on screen.
         let pipeline = TrackingPipeline(
             source: FakeFrameSource(frameCount: 1, orientation: .leftMirrored),
             tracker: StubFaceTracker(answers: [.success(.sample)]),

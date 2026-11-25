@@ -13,13 +13,15 @@ import ImageIO
 import Synchronization
 import Testing
 
+/// One at a time. In the simulator, clips written at the same moment were
+/// sometimes impossible to decode (error -8969).
+@Suite(.serialized)
 struct VideoFileFrameSourceTests {
     private final class Recorder: Sendable {
         let timestamps = Mutex<[Duration]>([])
         let sizes = Mutex<[Size2D]>([])
 
-        /// Timestamps in milliseconds: the clips are at 10 frames per second,
-        /// so rounding hides the conversion from the file's time scale.
+        /// In milliseconds. The clips are at 10 frames per second.
         var milliseconds: [Int] {
             timestamps.withLock { $0 }.map { Int(($0 / .milliseconds(1)).rounded()) }
         }
@@ -70,7 +72,7 @@ struct VideoFileFrameSourceTests {
         #expect(recorder.sizes.withLock { $0 } == [Size2D(width: 48, height: 64)])
     }
 
-    /// A phone held in portrait stores landscape frames and a quarter turn.
+    /// A phone in portrait stores landscape frames and a quarter turn.
     @Test func readsTheRotationStoredInTheFile() async throws {
         let url = try await TestVideo.make(frameCount: 1, transform: CGAffineTransform(a: 0, b: 1, c: -1, d: 0, tx: 48, ty: 0))
         defer { try? FileManager.default.removeItem(at: url) }
@@ -129,6 +131,8 @@ struct VideoFileFrameSourceTests {
         let (started, startedContinuation) = AsyncStream.makeStream(of: Void.self)
 
         let task = Task {
+            // If the run fails before a frame, the loop below must still end.
+            defer { startedContinuation.finish() }
             try await source.run { _ in startedContinuation.yield() }
         }
         for await _ in started { break }
@@ -167,7 +171,7 @@ struct VideoFileFrameSourceTests {
 
         try await source.run { _ in }
 
-        // The first frame goes out at once; the others one frame apart.
+        // The first frame goes out at once, the others one frame apart.
         #expect(Self.milliseconds(fakeClock.sleeps) == [100, 100])
     }
 

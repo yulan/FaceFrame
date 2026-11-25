@@ -8,13 +8,11 @@
 import AVFoundation
 import Foundation
 
-/// Writes a tiny H.264 clip to a temporary file, so the file source is tested
-/// on a real video without committing one.
+/// Writes a small H.264 clip to a temporary file, so no video is committed.
 enum TestVideo {
     struct WriteError: Error {}
 
-    /// - Parameter transform: the playback transform stored in the file, as a
-    ///   phone does when it records in portrait.
+    /// `transform`: the playback transform stored in the file.
     static func make(
         frameCount: Int,
         width: Int = 64,
@@ -55,7 +53,7 @@ enum TestVideo {
             guard adaptor.append(buffer, withPresentationTime: time) else { throw writer.error ?? WriteError() }
         }
         input.markAsFinished()
-        // Gives the last frame its full duration, so the clip lasts frameCount / framesPerSecond.
+        // The last frame gets its full duration.
         writer.endSession(atSourceTime: CMTime(value: CMTimeValue(frameCount), timescale: framesPerSecond))
         await writer.finishWriting()
         guard writer.status == .completed else { throw writer.error ?? WriteError() }
